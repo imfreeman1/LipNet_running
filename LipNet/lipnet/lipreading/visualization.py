@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
 
+import os
+
 def show_video_subtitle(frames, subtitle):
     fig, ax = plt.subplots()
     fig.show()
@@ -14,9 +16,8 @@ def show_video_subtitle(frames, subtitle):
     subs = subtitle.split()
     inc = max(len(frames)/(len(subs)+1), 0.01)
 
-    i = 0
     img = None
-    for frame in frames:
+    for i, frame in enumerate(frames):
         sub = " ".join(subs[:int(i/inc)])
 
         text.set_text(sub)
@@ -25,5 +26,12 @@ def show_video_subtitle(frames, subtitle):
             img = plt.imshow(frame)
         else:
             img.set_data(frame)
+
+        i = f'{i}'.zfill(2)
+        save_path = os.path.join(os.getcwd(), f'results/result_{i}.png')
+        ax.axes.get_xaxis().set_visible(False)
+        ax.axes.get_yaxis().set_visible(False)
+        plt.subplots_adjust(left = 0, bottom = 0, right = 1, top = 1, hspace = 0, wspace = 0)
+        plt.savefig(filename=save_path, bbox_inches='tight', pad_inches=0)
+        
         fig.canvas.draw()
-        i += 1
