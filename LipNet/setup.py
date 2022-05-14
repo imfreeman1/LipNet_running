@@ -22,7 +22,7 @@ setup(name='lipnet',
 		'Theano==0.9.0',
         'nltk==3.2.2',
         'sk-video==1.1.8',  # 'sk-video==1.1.7',
-        'dlib==19.4.0',
+        'dlib==19.24.0',  # 'dlib==19.4.0',
         
         'scikit-image==0.13',
         'scikit-learn',
