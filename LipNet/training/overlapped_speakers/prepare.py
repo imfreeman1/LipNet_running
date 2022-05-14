@@ -28,22 +28,37 @@ VAL_SAMPLES = int(sys.argv[3])
 for speaker_path in glob.glob(os.path.join(DATASET_VIDEO_PATH, '*')):
     speaker_id = os.path.splitext(speaker_path)[0].split('/')[-1]
 
-    subprocess.check_output("mkdir -p '{}'".format(os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'train')), shell=True)
+    path = "mkdir -p '{}'".format(os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'train'))
+    if not os.path.exists(path):
+        subprocess.check_output(path, shell=True)
 
     for s_path in glob.glob(os.path.join(DATASET_VIDEO_PATH, '*')):
         s_id = os.path.splitext(s_path)[0].split('/')[-1]
 
         if s_path == speaker_path:
-            subprocess.check_output("mkdir -p '{}'".format(os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'train', s_id)), shell=True)
-            subprocess.check_output("mkdir -p '{}'".format(os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'val', s_id)), shell=True)
+            path = "mkdir -p '{}'".format(os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'train', s_id))
+            if not os.path.exists(path):
+                subprocess.check_output(path, shell=True)
+            
+            path = "mkdir -p '{}'".format(os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'val', s_id))
+            if not os.path.exists(path):
+                subprocess.check_output(path, shell=True)
             n = 0
             for video_path in glob.glob(os.path.join(DATASET_VIDEO_PATH, speaker_id, '*')):
                 video_id = os.path.splitext(video_path)[0].split('/')[-1]
                 if n < VAL_SAMPLES:
-                    subprocess.check_output("ln -s '{}' '{}'".format(video_path, os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'val', s_id, video_id)), shell=True)
+                    path = "ln -s '{}' '{}'".format(video_path, os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'val', s_id, video_id))
+                    if not os.path.exists(path):
+                        subprocess.check_output(path, shell=True)
                 else:
-                    subprocess.check_output("ln -s '{}' '{}'".format(video_path, os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'train', s_id, video_id)), shell=True)
+                    path = "ln -s '{}' '{}'".format(video_path, os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'train', s_id, video_id))
+                    if not os.path.exists(path):
+                        subprocess.check_output(path, shell=True)
                 n += 1
         else:
-            subprocess.check_output("ln -s '{}' '{}'".format(s_path, os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'train', s_id)), shell=True)
-    subprocess.check_output("ln -s '{}' '{}'".format(DATASET_ALIGN_PATH, os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'align')), shell=True)
+            path = "ln -s '{}' '{}'".format(s_path, os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'train', s_id))
+            if not os.path.exists(path):
+                subprocess.check_output(path, shell=True)
+    path = "ln -s '{}' '{}'".format(DATASET_ALIGN_PATH, os.path.join(CURRENT_PATH, speaker_id, 'datasets', 'align'))
+    if not os.path.exists(path):
+        subprocess.check_output(path, shell=True)
