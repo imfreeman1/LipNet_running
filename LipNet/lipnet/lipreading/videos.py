@@ -9,7 +9,7 @@ from lipnet.lipreading.aligns import Align
 
 class VideoAugmenter(object):
     @staticmethod
-    def split_words(video, align):
+    def split_words(video, align):  #단어 나누기
         video_aligns = []
         for sub in align.align:
             # Create new video
@@ -18,18 +18,18 @@ class VideoAugmenter(object):
             _video.mouth = video.mouth[sub[0]:sub[1]]
             _video.set_data(_video.mouth)
             # Create new align
-            _align = Align(align.absolute_max_string_len, align.label_func).from_array([(0, sub[1]-sub[0], sub[2])])
+            _align = Align(align.absolute_max_string_len, align.label_func).from_array([(0, sub[1]-sub[0], sub[2])]) # Align로 인스턴스 생성 label_func를 찾아봐야할 듯.
             # Append
             video_aligns.append((_video, _align))
         return video_aligns
 
     @staticmethod
     def merge(video_aligns):
-        vsample = video_aligns[0][0]
-        asample = video_aligns[0][1]
-        video = Video(vsample.vtype, vsample.face_predictor_path)
-        video.face = np.ones((0, vsample.face.shape[1], vsample.face.shape[2], vsample.face.shape[3]), dtype=np.uint8)
-        video.mouth = np.ones((0, vsample.mouth.shape[1], vsample.mouth.shape[2], vsample.mouth.shape[3]), dtype=np.uint8)
+        vsample = video_aligns[0][0]    # video_aligns[0][0]를 vsample에 저장 video의 관한 내용을 저장하는 듯 함.
+        asample = video_aligns[0][1]    # video_alignes[0][1]을 asample에 저장 align에 관한 내용을 저장하는 듯
+        video = Video(vsample.vtype, vsample.face_predictor_path) #video 변수에 Video(vasmple.vtype, vsample의 얼굴 예측을 저장)
+        video.face = np.ones((0, vsample.face.shape[1], vsample.face.shape[2], vsample.face.shape[3]), dtype=np.uint8) # 여기 두줄이 np.ones를 만든다는 건 알겠는데 face.shape를 모르겠음
+        video.mouth = np.ones((0, vsample.mouth.shape[1], vsample.mouth.shape[2], vsample.mouth.shape[3]), dtype=np.uint8) #
         align = []
         inc = 0
         for _video, _align in video_aligns:
@@ -92,9 +92,9 @@ class VideoAugmenter(object):
 
     @staticmethod
     def pad(video, length):
-        pad_length = max(length - video.length, 0)
-        video_length = min(length, video.length)
-        face_padding = np.ones((pad_length, video.face.shape[1], video.face.shape[2], video.face.shape[3]), dtype=np.uint8) * 0
+        pad_length = max(length - video.length, 0) # pad의 크기 = max((length - video.length),0)
+        video_length = min(length, video.length)    # video의 크기 = min(length, video.length)
+        face_padding = np.ones((pad_length, video.face.shape[1], video.face.shape[2], video.face.shape[3]), dtype=np.uint8) * 0     # np.ones, dtype = np.uint8, 
         mouth_padding = np.ones((pad_length, video.mouth.shape[1], video.mouth.shape[2], video.mouth.shape[3]), dtype=np.uint8) * 0
         _video = Video(video.vtype, video.face_predictor_path)
         _video.face = np.concatenate((video.face[0:video_length], face_padding), 0)
@@ -105,15 +105,15 @@ class VideoAugmenter(object):
 
 class Video(object):
     def __init__(self, vtype='mouth', face_predictor_path=None):
-        if vtype == 'face' and face_predictor_path is None:
-            raise AttributeError('Face video need to be accompanied with face predictor')
-        self.face_predictor_path = face_predictor_path
+        if vtype == 'face' and face_predictor_path is None: #vtype이 face이고 face_predictor_path가 None이면 
+            raise AttributeError('Face video need to be accompanied with face predictor') #에러를 일으킴.
+        self.face_predictor_path = face_predictor_path  
         self.vtype = vtype
 
-    def from_frames(self, path):
-        frames_path = sorted([os.path.join(path, x) for x in os.listdir(path)])
-        frames = [ndimage.imread(frame_path) for frame_path in frames_path]
-        self.handle_type(frames)
+    def from_frames(self, path):    
+        frames_path = sorted([os.path.join(path, x) for x in os.listdir(path)])     # path와 listdir(path)를 join하고 sorted한 list 생성
+        frames = [ndimage.imread(frame_path) for frame_path in frames_path]     # ndimage.imread를 frame단위로 진행.
+        self.handle_type(frames)    
         return self
 
     def from_video(self, path):
@@ -134,9 +134,9 @@ class Video(object):
             raise Exception('Video type not found')
 
     def process_frames_face(self, frames):
-        detector = dlib.get_frontal_face_detector()
-        predictor = dlib.shape_predictor(self.face_predictor_path)
-        mouth_frames = self.get_frames_mouth(detector, predictor, frames)
+        detector = dlib.get_frontal_face_detector()     # dlib 정면 얼굴 찾기
+        predictor = dlib.shape_predictor(self.face_predictor_path)      # dlib 모양 예측하기
+        mouth_frames = self.get_frames_mouth(detector, predictor, frames)   # 입 tetector와 predictor, 영상의 frames를 저장.
         self.face = np.array(frames)
         self.mouth = np.array(mouth_frames)
         self.set_data(mouth_frames)
@@ -181,6 +181,7 @@ class Video(object):
 
             mouth_centroid_norm = mouth_centroid * normalize_ratio
 
+            # 입의 바운더리
             mouth_l = int(mouth_centroid_norm[0] - MOUTH_WIDTH / 2)
             mouth_r = int(mouth_centroid_norm[0] + MOUTH_WIDTH / 2)
             mouth_t = int(mouth_centroid_norm[1] - MOUTH_HEIGHT / 2)
@@ -192,20 +193,20 @@ class Video(object):
         return mouth_frames
 
     def get_video_frames(self, path):
-        videogen = skvideo.io.vreader(path)
-        frames = np.array([frame for frame in videogen])
+        videogen = skvideo.io.vreader(path)     # video reading
+        frames = np.array([frame for frame in videogen]) # np.array로 변경
         return frames
 
     def set_data(self, frames):
-        data_frames = []
+        data_frames = []    
         for frame in frames:
             frame = frame.swapaxes(0,1) # swap width and height to form format W x H x C
             if len(frame.shape) < 3:
-                frame = np.array([frame]).swapaxes(0,2).swapaxes(0,1) # Add grayscale channel
+                frame = np.array([frame]).swapaxes(0,2).swapaxes(0,1) # Add grayscale channel [swapaxes] -> 축을 변환.
             data_frames.append(frame)
         frames_n = len(data_frames)
         data_frames = np.array(data_frames) # T x W x H x C
         if K.image_data_format() == 'channels_first':
-            data_frames = np.rollaxis(data_frames, 3) # C x T x W x H
+            data_frames = np.rollaxis(data_frames, 3) # C x T x W x H 축을 회전시킴? 굴림?
         self.data = data_frames
         self.length = frames_n

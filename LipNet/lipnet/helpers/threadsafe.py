@@ -1,14 +1,14 @@
-import threading
+import threading #스레드 기반 병렬 처리 모듈 I/O 병목 작업을 동시에 실행
 
 class threadsafe_iter:
     """Takes an iterator/generator and makes it thread-safe by
     serializing call to the `next` method of given iterator/generator.
     """
-    def __init__(self, it):
+    def __init__(self, it):     # initialization
         self.it = it
         self.lock = threading.Lock()
 
-    def __iter__(self):
+    def __iter__(self):         # 
         return self
 
     def next(self):

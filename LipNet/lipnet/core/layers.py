@@ -1,4 +1,4 @@
-from keras.layers.core import Lambda
+from keras.layers.core import Lambda  # 람다식을 Layer 객체로 매핑
 from lipnet.core.loss import ctc_lambda_func
 
 # CTC Layer implementation using Lambda layer

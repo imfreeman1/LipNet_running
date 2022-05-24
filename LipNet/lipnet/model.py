@@ -9,15 +9,16 @@ from lipnet.core.layers import CTC
 from keras import backend as K
 
 
+# LipNet 클래스
 class LipNet(object):
     def __init__(self, img_c=3, img_w=100, img_h=50, frames_n=75, absolute_max_string_len=32, output_size=28):
-        self.img_c = img_c
-        self.img_w = img_w
-        self.img_h = img_h
-        self.frames_n = frames_n
-        self.absolute_max_string_len = absolute_max_string_len
+        self.img_c = img_c  # 이미지 channel
+        self.img_w = img_w  # 이미지 width
+        self.img_h = img_h  # 이미지 height
+        self.frames_n = frames_n  # 이미지 프레임 개수
+        self.absolute_max_string_len = absolute_max_string_len  # 문자열 최대 길이
         self.output_size = output_size
-        self.build()
+        self.build()  # 모델 구조 build
 
     def build(self):
         if K.image_data_format() == 'channels_first':
@@ -56,17 +57,22 @@ class LipNet(object):
         self.input_length = Input(name='input_length', shape=[1], dtype='int64')
         self.label_length = Input(name='label_length', shape=[1], dtype='int64')
 
+        # CTC Loss 설정
         self.loss_out = CTC('ctc', [self.y_pred, self.labels, self.input_length, self.label_length])
 
+        # 모델 생성
         self.model = Model(inputs=[self.input_data, self.labels, self.input_length, self.label_length], outputs=self.loss_out)
 
+    # 모델 구조 확인
     def summary(self):
         Model(inputs=self.input_data, outputs=self.y_pred).summary()
 
+    # 모델 추론 확인
     def predict(self, input_batch):
         return self.test_function([input_batch, 0])[0]  # the first 0 indicates test
 
     @property
     def test_function(self):
         # captures output of softmax so we can decode the output during visualization
+        # 시각화 중에 출력을 디코딩할 수 있도록 softmax 출력 캡처
         return K.function([self.input_data, K.learning_phase()], [self.y_pred, K.learning_phase()])

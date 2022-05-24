@@ -15,7 +15,7 @@ import multiprocessing
 # datasets/[train|val]/<sid>/<id>/<image>.png
 # or datasets/[train|val]/<sid>/<id>.mpg
 # datasets/align/<id>.align
-class BasicGenerator(keras.callbacks.Callback):
+class BasicGenerator(keras.callbacks.Callback):     # 기본 제네레이터 
     def __init__(self, dataset_path, minibatch_size, img_c, img_w, img_h, frames_n, absolute_max_string_len=30, **kwargs):
         self.dataset_path   = dataset_path
         self.minibatch_size = minibatch_size
@@ -25,12 +25,12 @@ class BasicGenerator(keras.callbacks.Callback):
         self.img_h          = img_h
         self.frames_n       = frames_n
         self.absolute_max_string_len = absolute_max_string_len
-        self.cur_train_index = multiprocessing.Value('i', 0)
-        self.cur_val_index   = multiprocessing.Value('i', 0)
-        self.curriculum      = kwargs.get('curriculum', None)
-        self.random_seed     = kwargs.get('random_seed', 13)
-        self.vtype               = kwargs.get('vtype', 'mouth')
-        self.face_predictor_path = kwargs.get('face_predictor_path', None)
+        self.cur_train_index = multiprocessing.Value('i', 0)    # multiprocessing API를 사용하여 생성 프로세스를 지원하는 패키지
+        self.cur_val_index   = multiprocessing.Value('i', 0)    # Value를 사용하여 데이터를 공유 메모리 맵에 저장
+        self.curriculum      = kwargs.get('curriculum', None)   # kwargs.get <- 제공되지 않은 경우 args 부여 여기선 curriculm에 None을 부여
+        self.random_seed     = kwargs.get('random_seed', 13)    # random_seed에 13을 부여
+        self.vtype               = kwargs.get('vtype', 'mouth') # vtype은 mouth
+        self.face_predictor_path = kwargs.get('face_predictor_path', None) 
         self.steps_per_epoch     = kwargs.get('steps_per_epoch', None)
         self.validation_steps    = kwargs.get('validation_steps', None)
         # Process epoch is used by non-training generator (e.g: validation)
@@ -59,11 +59,11 @@ class BasicGenerator(keras.callbacks.Callback):
 
     @property
     def training_size(self):
-        return len(self.train_list)
+        return len(self.train_list)     #train_list의 길이
 
     @property
     def default_training_steps(self):
-        return self.training_size / self.minibatch_size
+        return self.training_size / self.minibatch_size     
 
     @property
     def validation_size(self):
@@ -73,17 +73,17 @@ class BasicGenerator(keras.callbacks.Callback):
     def default_validation_steps(self):
         return self.validation_size / self.minibatch_size
 
-    def get_output_size(self):
+    def get_output_size(self):      #알파벳 갯수 + 빈칸 + CTC 빈칸  = 28
         return 28
 
     def get_cache_path(self):
-        return self.dataset_path.rstrip('/') + '.cache'
+        return self.dataset_path.rstrip('/') + '.cache'     # dataset_path의 '/'와 ' ' 제거하고 .cache 붙임.
 
     def enumerate_videos(self, path):
         video_list = []
-        for video_path in glob.glob(path):
+        for video_path in glob.glob(path):      # glob.glob(path를 리스트로 반환)
             try:
-                if os.path.isfile(video_path):
+                if os.path.isfile(video_path):      #파일인지 판단하고 T/F 반환
                     video = Video(self.vtype, self.face_predictor_path).from_video(video_path)
                 else:
                     video = Video(self.vtype, self.face_predictor_path).from_frames(video_path)
@@ -92,7 +92,7 @@ class BasicGenerator(keras.callbacks.Callback):
             except:
                 print ("Error loading video: "+video_path)
                 continue
-            if K.image_data_format() == 'channels_first' and video.data.shape != (self.img_c,self.frames_n,self.img_w,self.img_h):
+            if K.image_data_format() == 'channels_first' and video.data.shape != (self.img_c,self.frames_n,self.img_w,self.img_h):      # video.data의 shape가 맞는지 확인하라는 에러문자.
                 print ("Video "+video_path+" has incorrect shape "+str(video.data.shape)+", must be "+str((self.img_c,self.frames_n,self.img_w,self.img_h))+"")
                 continue
             if K.image_data_format() != 'channels_first' and video.data.shape != (self.frames_n,self.img_w,self.img_h,self.img_c):
@@ -104,32 +104,32 @@ class BasicGenerator(keras.callbacks.Callback):
     def enumerate_align_hash(self, video_list):
         align_hash = {}
         for video_path in video_list:
-            video_id = os.path.splitext(video_path)[0].split('/')[-1]
-            align_path = os.path.join(self.align_path, video_id)+".align"
-            align_hash[video_id] = Align(self.absolute_max_string_len, text_to_labels).from_file(align_path)
+            video_id = os.path.splitext(video_path)[0].split('/')[-1]   # video_path의 [0]를 split('/'), 가장 뒤에 것을 사용.
+            align_path = os.path.join(self.align_path, video_id)+".align"       # align_path와 video_id join 후 .align 붙임.
+            align_hash[video_id] = Align(self.absolute_max_string_len, text_to_labels).from_file(align_path)    # align_hash dict에 key는 video_id Align의 label_func을 text_to_labels로 하고 align_path읽어서 결과를 value
         return align_hash
 
     def build_dataset(self):
-        if os.path.isfile(self.get_cache_path()):
-            print ("\nLoading dataset list from cache...")
-            with open (self.get_cache_path(), 'rb') as fp:
-                self.train_list, self.val_list, self.align_hash = pickle.load(fp)
+        if os.path.isfile(self.get_cache_path()):       # get_cahe_path가 True이면
+            print ("\nLoading dataset list from cache...")  # print
+            with open (self.get_cache_path(), 'rb') as fp:  # get_cache_path를 'rb' open 'rb'로 열면 bytes로 읽어짐.
+                self.train_list, self.val_list, self.align_hash = pickle.load(fp)   # pickle형태의 data를 load
         else:
             print ("\nEnumerating dataset list from disk...")
-            self.train_list = self.enumerate_videos(os.path.join(self.train_path, '*', '*'))
-            self.val_list   = self.enumerate_videos(os.path.join(self.val_path, '*', '*'))
-            self.align_hash = self.enumerate_align_hash(self.train_list + self.val_list)
-            with open(self.get_cache_path(), 'wb') as fp:
-                pickle.dump((self.train_list, self.val_list, self.align_hash), fp)
+            self.train_list = self.enumerate_videos(os.path.join(self.train_path, '*', '*'))    #train_path를 정렬
+            self.val_list   = self.enumerate_videos(os.path.join(self.val_path, '*', '*'))      #val_path를 정렬
+            self.align_hash = self.enumerate_align_hash(self.train_list + self.val_list)        #tain_list와 val_list를 더해줌. (무슨의미인지는 잘 모르겠다.)
+            with open(self.get_cache_path(), 'wb') as fp:       # get_cahe_path가 bytes write모드로 열려 있을때
+                pickle.dump((self.train_list, self.val_list, self.align_hash), fp)  # pickle형식으로 파일을 쓴다.
 
         print ("Found {} videos for training.".format(self.training_size))
         print ("Found {} videos for validation.".format(self.validation_size))
         print ("")
 
-        np.random.shuffle(self.train_list)
+        np.random.shuffle(self.train_list)  #train_list를 shuffle
 
     def get_align(self, _id):
-        return self.align_hash[_id]
+        return self.align_hash[_id]     #align_hash[_id]의 value를 return
 
     def get_batch(self, index, size, train):
         if train:
