@@ -10,23 +10,39 @@ from lipnet.model2 import LipNet
 import numpy as np
 import datetime
 import os
+import sys
 
 np.random.seed(55)
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
-DATASET_DIR  = os.path.join(CURRENT_PATH, 'datasets')
-OUTPUT_DIR   = os.path.join(CURRENT_PATH, 'results')
-LOG_DIR      = os.path.join(CURRENT_PATH, 'logs')
+
+print(CURRENT_PATH)
 
 PREDICT_GREEDY      = False
 PREDICT_BEAM_WIDTH  = 200
 PREDICT_DICTIONARY  = os.path.join(CURRENT_PATH,'..','..','common','dictionaries','grid.txt')
 
 def curriculum_rules(epoch):
+    if epoch < 1:
+        return { 'sentence_length': 1 }
+    elif 1 <= epoch < 2:
+        return { 'sentence_length': 2 }
+    elif 2 <= epoch < 3:
+        return { 'sentence_length': 2, 'flip_probability': 0.5 }
+    elif 3 <= epoch < 4:
+        return { 'sentence_length': 3, 'flip_probability': 0.5, 'jitter_probability': 0.05 }
+    elif 4 <= epoch < 5:
+        return { 'sentence_length': -1 }
+    elif 5 <= epoch < 6:
+        return { 'sentence_length': -1, 'flip_probability': 0.5 }
     return { 'sentence_length': -1, 'flip_probability': 0.5, 'jitter_probability': 0.05 }
 
 
-def train(run_name, start_epoch, stop_epoch, img_c, img_w, img_h, frames_n, absolute_max_string_len, minibatch_size):
+def train(run_name, speaker, start_epoch, stop_epoch, img_c, img_w, img_h, frames_n, absolute_max_string_len, minibatch_size):
+    DATASET_DIR = os.path.join(CURRENT_PATH, speaker, 'datasets')
+    OUTPUT_DIR = os.path.join(CURRENT_PATH, speaker, 'results')
+    LOG_DIR = os.path.join(CURRENT_PATH, speaker, 'logs')
+
     curriculum = Curriculum(curriculum_rules)
     lip_gen = BasicGenerator(dataset_path=DATASET_DIR,
                                 minibatch_size=minibatch_size,
@@ -55,20 +71,25 @@ def train(run_name, start_epoch, stop_epoch, img_c, img_w, img_h, frames_n, abso
     # define callbacks
     statistics  = Statistics(lipnet, lip_gen.next_val(), decoder, 256, output_dir=os.path.join(OUTPUT_DIR, run_name))
     visualize   = Visualize(os.path.join(OUTPUT_DIR, run_name), lipnet, lip_gen.next_val(), decoder, num_display_sentences=minibatch_size)
-    tensorboard = TensorBoard(log_dir=os.path.join(LOG_DIR, run_name))
+    # tensorboard = TensorBoard(log_dir=os.path.join(LOG_DIR, run_name))
     csv_logger  = CSVLogger(os.path.join(LOG_DIR, "{}-{}.csv".format('training',run_name)), separator=',', append=True)
     checkpoint  = ModelCheckpoint(os.path.join(OUTPUT_DIR, run_name, "weights{epoch:02d}.h5"), monitor='val_loss', save_weights_only=True, mode='auto', period=1)
-
+    # print(type(statistics))
+    # print(type(visualize))
+    # print(type(csv_logger))
+    # print(type(checkpoint))
+    # print(type(lip_gen))
     lipnet.model.fit_generator(generator=lip_gen.next_train(),
                         steps_per_epoch=lip_gen.default_training_steps, epochs=stop_epoch,
-                        validation_data=lip_gen.next_val(), validation_steps=lip_gen.default_validation_steps,
-                        callbacks=[checkpoint, statistics, visualize, lip_gen, tensorboard, csv_logger], 
-                        initial_epoch=start_epoch, 
-                        verbose=1,
-                        max_q_size=5,
-                        workers=2,
-                        pickle_safe=True)
+                        validation_data=lip_gen.next_val(), validation_steps=1,
+                        # callbacks=[statistics, visualize, lip_gen], # checkpoint, tensorboard, csv_logger],
+                        initial_epoch=start_epoch,
+                        verbose=1)
+                        # max_q_size=5,
+                        # workers=2,
+                        # pickle_safe=True)
 
 if __name__ == '__main__':
     run_name = datetime.datetime.now().strftime('%Y:%m:%d:%H:%M:%S')
-    train(run_name, 0, 5000, 3, 100, 50, 75, 32, 50)
+    speaker = sys.argv[1]
+    train(run_name, speaker, 0, 1, 3, 100, 50, 66, 32, 1)

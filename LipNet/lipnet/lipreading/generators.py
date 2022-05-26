@@ -87,6 +87,7 @@ class BasicGenerator(keras.callbacks.Callback):     # 기본 제네레이터
                     video = Video(self.vtype, self.face_predictor_path).from_video(video_path)
                 else:
                     video = Video(self.vtype, self.face_predictor_path).from_frames(video_path)
+                
             except AttributeError as err:
                 raise err
             except:
@@ -110,7 +111,7 @@ class BasicGenerator(keras.callbacks.Callback):     # 기본 제네레이터
         return align_hash
 
     def build_dataset(self):
-        if os.path.isfile(self.get_cache_path()):       # get_cahe_path가 True이면
+        if os.path.isfile(self.get_cache_path()):       # get_cache_path가 True이면
             print ("\nLoading dataset list from cache...")  # print
             with open (self.get_cache_path(), 'rb') as fp:  # get_cache_path를 'rb' open 'rb'로 열면 bytes로 읽어짐.
                 self.train_list, self.val_list, self.align_hash = pickle.load(fp)   # pickle형태의 data를 load

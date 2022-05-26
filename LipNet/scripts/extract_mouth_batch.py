@@ -19,6 +19,11 @@ SOURCE_EXTS = sys.argv[2]
 TARGET_PATH = sys.argv[3]
 
 FACE_PREDICTOR_PATH = sys.argv[4]
+print('/n/n/n',SOURCE_PATH)
+print('/n/n/n',SOURCE_EXTS)
+print('/n/n/n',TARGET_PATH)
+
+print('/n','/n','/n',FACE_PREDICTOR_PATH)
 
 # 디렉토리 생성
 def mkdir_p(path):
