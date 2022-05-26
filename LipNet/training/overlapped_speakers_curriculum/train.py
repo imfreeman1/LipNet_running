@@ -82,7 +82,7 @@ def train(run_name, speaker, start_epoch, stop_epoch, img_c, img_w, img_h, frame
     lipnet.model.fit_generator(generator=lip_gen.next_train(),
                         steps_per_epoch=lip_gen.default_training_steps, epochs=stop_epoch,
                         validation_data=lip_gen.next_val(), validation_steps=1,
-                        # callbacks=[statistics, visualize, lip_gen], # checkpoint, tensorboard, csv_logger],
+                        # callbacks=[statistics, visualize, lip_gen], # checkpoint, tensorboard, csv_logger], # bytes ,str <<
                         initial_epoch=start_epoch,
                         verbose=1)
                         # max_q_size=5,
